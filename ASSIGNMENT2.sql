@@ -1288,6 +1288,8 @@ available_from date,
 primary key (book_id));
 
 select * from orders;
+drop table orders;
+
 CREATE TABLE orders
 (order_id int,
 book_id int,
@@ -1297,7 +1299,39 @@ primary key(order_id),
 FOREIGN KEY (book_id)
 REFERENCES books(book_id));
 
+desc orders ;
 
+insert into books values
+(1,"Kalila AndDemna" ,'2010-01-01'),
+(2, "28 Letters" ,'2012-05-12'),
+(3 ,"The Hobbit" ,'2019-06-10'),
+(4,"13 Reasons Why" ,'2019-06-01'),
+(5 ,"The Hunger Games" ,'2008-09-21');
+
+insert into orders values
+(1 ,1 ,2 ,'2018-07-26'),
+(2 ,1, 1, '2018-11-05'),
+(3 ,3, 8 ,'2019-06-11'),
+(4 ,4, 6, '2019-06-05'),
+(5 ,4 ,5 ,'2019-06-20'),
+(6 ,5, 9, '2009-02-02'),
+(7 ,5 ,8 ,'2010-04-13');
+
+#solution 
+
+select t1.book_id, t1.name
+from
+(
+(select book_id, name from Books where
+available_from < '2019-05-23') t1
+left join
+(select book_id, sum(quantity) as quantity
+from Orders
+where dispatch_date > '2018-06-23' and dispatch_date<= '2019-06-23'
+group by book_id
+having quantity < 10) t2
+on t1.book_id = t2.book_id
+);
 
 
 
@@ -1379,3 +1413,19 @@ insert into players values
 select * from players;
 
 #solution
+
+select t2.group_id, t2.player_id from
+(
+select t1.group_id, t1.player_id, 
+dense_rank() over(partition by group_id order by score desc, player_id) as r
+from
+(
+select p.*, case when p.player_id = m.first_player then m.first_score
+when p.player_id = m.second_player then m.second_score
+end as score
+from
+Players p, Matches m
+where player_id in (first_player, second_player)
+) t1
+) t2
+where r = 1;
